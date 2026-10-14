@@ -81,12 +81,27 @@ async function toUploadBlob(file: File): Promise<Blob> {
 
 /** Sends the image as raw bytes — half the payload of a base64 JSON envelope. */
 async function uploadImageBlob(blob: Blob, alt: string): Promise<{ id: number; url: string }> {
-  const response = await fetch("/api/admin/images", {
-    method: "POST",
-    headers: { "Content-Type": blob.type || "image/jpeg", "x-image-alt": alt },
-    body: blob,
-  });
-  const data = (await response.json()) as { id?: number; url?: string; error?: string };
+  let response: Response;
+  try {
+    response = await fetch("/api/admin/images", {
+      method: "POST",
+      headers: { "Content-Type": blob.type || "image/jpeg", "x-image-alt": alt },
+      body: blob,
+    });
+  } catch {
+    throw new Error("Could not reach the server — check your connection and try again.");
+  }
+  const text = await response.text();
+  let data: { id?: number; url?: string; error?: string } = {};
+  try {
+    data = JSON.parse(text) as { id?: number; url?: string; error?: string };
+  } catch {
+    throw new Error(
+      response.ok
+        ? "The server sent an unreadable reply — try that photo once more."
+        : `Upload failed (${response.status}). Try a smaller photo or report this to support.`,
+    );
+  }
   if (!response.ok || !data.url || typeof data.id !== "number") {
     throw new Error(data.error ?? "The image could not be uploaded.");
   }

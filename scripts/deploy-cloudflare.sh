@@ -18,7 +18,7 @@
 #        ./scripts/deploy-cloudflare.sh
 #
 # Everything else is optional:
-#        ADMIN_PASSWORD, SELLER_EMAIL, RESEND_API_KEY, EMAIL_FROM
+#        ADMIN_PASSWORD, SELLER_EMAIL, RESEND_API_KEY, EMAIL_FROM, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -113,6 +113,9 @@ put_secret ADMIN_PASSWORD "$ADMIN_PASSWORD"
 put_secret SELLER_EMAIL   "${SELLER_EMAIL:-}"
 put_secret RESEND_API_KEY "${RESEND_API_KEY:-}"
 put_secret EMAIL_FROM     "${EMAIL_FROM:-}"
+put_secret CLOUDINARY_CLOUD_NAME "${CLOUDINARY_CLOUD_NAME:-}"
+put_secret CLOUDINARY_API_KEY    "${CLOUDINARY_API_KEY:-}"
+put_secret CLOUDINARY_API_SECRET "${CLOUDINARY_API_SECRET:-}"
 
 # Generate a random session secret if one is not provided.
 if [ -z "${ADMIN_SESSION_SECRET:-}" ]; then
