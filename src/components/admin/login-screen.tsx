@@ -60,11 +60,7 @@ export function AdminLogin() {
           </button>
         </form>
 
-        <p className="mt-6 text-[11.5px] leading-relaxed text-muted">
-          Owner access. First time? The starting password is{" "}
-          <span className="nums font-medium text-ink-soft">REDACTED</span> — change it by setting
-          ADMIN_PASSWORD in your environment.
-        </p>
+        <p className="mt-6 text-[11.5px] leading-relaxed text-muted">Owner access only.</p>
       </div>
     </div>
   );
