@@ -1,0 +1,343 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #111112;
+  --color-ink-soft: #3c3b39;
+  --color-muted: #76736e;
+  --color-paper: #ffffff;
+  --color-mist: #f5f4f2;
+  --color-line: #e5e3df;
+  --color-accent: #8a6a4f;
+  --color-accent-soft: #f1ece6;
+
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+
+  --text-display: clamp(2.5rem, 6.2vw, 4.75rem);
+  --text-title: clamp(1.85rem, 3.6vw, 3rem);
+  --text-section: clamp(1.5rem, 2.6vw, 2.15rem);
+
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  -webkit-text-size-adjust: 100%;
+  /* Keep the paint area predictable so sticky elements do not flicker. */
+  overflow-anchor: none;
+}
+
+img {
+  /* Never let a half-loaded image collapse to zero height. */
+  min-height: 1px;
+}
+
+body {
+  font-feature-settings: "kern", "liga";
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #111112;
+  color: #fff;
+}
+
+/* Layout ---------------------------------------------------------------- */
+
+.shell {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .shell {
+    padding-inline: 2rem;
+  }
+}
+
+.display {
+  font-size: var(--text-display);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+
+.title {
+  font-size: var(--text-title);
+  line-height: 1.04;
+  letter-spacing: -0.028em;
+  font-weight: 600;
+}
+
+.section {
+  font-size: var(--text-section);
+  line-height: 1.08;
+  letter-spacing: -0.022em;
+  font-weight: 600;
+}
+
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.hairline {
+  border-top: 1px solid var(--color-line);
+}
+
+/* Links ---------------------------------------------------------------- */
+
+.link {
+  position: relative;
+  display: inline-block;
+}
+
+.link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s var(--ease-out-soft);
+}
+
+.link:hover::after,
+.link[data-active="true"]::after {
+  transform: scaleX(1);
+}
+
+/* Buttons -------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 3rem;
+  padding-inline: 1.5rem;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: transform 0.25s var(--ease-out-soft), background-color 0.25s ease,
+    color 0.25s ease, opacity 0.25s ease, border-color 0.25s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.975);
+}
+
+.btn-primary {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #2b2a28;
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  border: 1px solid var(--color-line);
+  color: var(--color-ink);
+  background: transparent;
+}
+
+.btn-ghost:hover {
+  border-color: var(--color-ink);
+}
+
+.btn-quiet {
+  color: var(--color-ink);
+  background: var(--color-mist);
+}
+
+.btn-quiet:hover {
+  background: #ebe9e5;
+}
+
+.btn-sm {
+  height: 2.375rem;
+  padding-inline: 1.125rem;
+  font-size: 0.8125rem;
+}
+
+/* Fields --------------------------------------------------------------- */
+
+.field {
+  width: 100%;
+  height: 3rem;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  padding-inline: 0.875rem;
+  font-size: 0.9375rem;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--color-ink);
+  box-shadow: 0 0 0 3px rgba(17, 17, 18, 0.07);
+}
+
+textarea.field {
+  height: auto;
+  min-height: 6rem;
+  padding-block: 0.75rem;
+  resize: vertical;
+}
+
+.label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  margin-bottom: 0.375rem;
+  letter-spacing: 0.01em;
+}
+
+select.field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2376736e' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  padding-right: 2.25rem;
+}
+
+/* Product surface + 3D tilt -------------------------------------------- */
+
+.tilt-scene {
+  perspective: 1200px;
+}
+
+.tilt {
+  --rx: 0deg;
+  --ry: 0deg;
+  height: 100%;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.45s var(--ease-out-soft);
+  backface-visibility: hidden;
+}
+
+/* While the pointer is over the card, follow it closely. */
+.tilt-scene[data-hover="true"] .tilt {
+  transition: transform 0.1s linear;
+}
+
+/* The image sits slightly larger than its frame so rotating the surface never
+   exposes the background at the corners. */
+.tilt img {
+  transform: scale(1.045);
+  transition: transform 0.6s var(--ease-out-soft);
+}
+
+.sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    118deg,
+    rgba(255, 255, 255, 0) 34%,
+    rgba(255, 255, 255, 0.34) 50%,
+    rgba(255, 255, 255, 0) 66%
+  );
+  transition: opacity 0.5s ease;
+}
+
+.tilt-scene[data-hover="true"] .sheen {
+  opacity: 1;
+}
+
+/* Motion --------------------------------------------------------------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.7s var(--ease-out-soft) both;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade {
+  animation: fade 0.4s ease both;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.slide-in {
+  animation: slide-in 0.42s var(--ease-out-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .rise,
+  .fade,
+  .slide-in,
+  .tilt {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* Scrollbars ----------------------------------------------------------- */
+
+.no-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-bar {
+  scrollbar-width: none;
+}
+
+/* Mono numerals for tabular figures ------------------------------------ */
+
+.nums {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "house-of-morena",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  // Set with: npx wrangler secret put DATABASE_URL
+  // and:    npx wrangler secret put ADMIN_PASSWORD
+  // Hyperdrive pools the database connection, which is what lets node-postgres
+  // run on Workers. Create it with:
+  //   npx wrangler hyperdrive create morena-db --connection-string="<postgres url>"
+  // then uncomment below using the returned id.
+  //
+  // "hyperdrive": [
+  //   {
+  //     "binding": "HYPERDRIVE",
+  //     "id": "<hyperdrive-id>"
+  //   }
+  // ]
+}
