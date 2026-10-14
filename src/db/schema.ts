@@ -146,6 +146,16 @@ export const messages = pgTable(
   (table) => [index("messages_created_idx").on(table.createdAt)],
 );
 
+/**
+ * Store settings the seller edits from the admin panel — bank transfer
+ * details and anything else that should change without a redeploy.
+ */
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type MessageRow = typeof messages.$inferSelect;
 export type CategoryRow = typeof categories.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;

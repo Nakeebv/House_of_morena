@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { BankDetailsForm } from "@/components/admin/bank-details-form";
 import { emailTransportConfigured, listMessages, sellerEmailConfigured } from "@/lib/email";
+import { getSettings } from "@/lib/settings";
 import { SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +41,7 @@ function Env({ name }: { name: string }) {
 }
 
 export default async function AdminSettingsPage() {
-  const messages = await listMessages(200);
+  const [messages, settings] = await Promise.all([listMessages(200), getSettings()]);
   const sent = messages.filter((m) => m.status === "sent").length;
   const queued = messages.filter((m) => m.status === "queued").length;
   const failed = messages.filter((m) => m.status === "failed").length;
@@ -197,6 +199,26 @@ export default async function AdminSettingsPage() {
                 </div>
               ))}
             </dl>
+          </section>
+
+          <section className="rounded-2xl border border-line bg-white p-5 md:p-6">
+            <h2 className="text-[15px] font-semibold tracking-[-0.01em]">Bank transfer details</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted">
+              Shown to buyers on the transfer step of checkout. Change them any time — the next
+              person who pays uses the new details.
+            </p>
+            <div className="mt-5">
+              <BankDetailsForm initialValues={settings} />
+            </div>
+            <p className="mt-4 rounded-xl bg-mist p-4 text-[12px] leading-relaxed text-ink-soft">
+              Currently set to:{" "}
+              <span className="font-medium">
+                {settings.bank_name || SITE.bankDetails.bank} ·{" "}
+                {settings.account_name || SITE.bankDetails.accountName} ·{" "}
+                <span className="nums">{settings.account_number || SITE.bankDetails.accountNumber}</span>
+              </span>
+              {!settings.account_number ? " (default placeholder — replace it)" : ""}
+            </p>
           </section>
 
           <section className="rounded-2xl border border-line bg-white p-5 md:p-6">

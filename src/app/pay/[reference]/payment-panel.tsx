@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatFromUsd, type CurrencyCode } from "@/lib/currency";
-import { SITE, whatsappLink } from "@/lib/site";
+import { whatsappLink } from "@/lib/site";
 
 type Method = "transfer" | "whatsapp" | "pod";
 
@@ -18,6 +18,9 @@ export type PayOrder = {
   totalUsd: number;
   subtotalUsd: number;
   shippingUsd: number;
+  bank: string;
+  accountName: string;
+  accountNumber: string;
   items: { name: string; quantity: number; unitPriceUsd: number; sizeLabel: string | null }[];
 };
 
@@ -113,9 +116,9 @@ export function PaymentPanel({ order }: { order: PayOrder }) {
             <div className="flex flex-col gap-5">
               <h2 className="text-[19px] font-semibold tracking-[-0.02em]">Transfer to our account</h2>
               <div className="rounded-2xl border border-line p-5">
-                <Row label="Bank" value={SITE.bankDetails.bank} />
-                <Row label="Account name" value={SITE.bankDetails.accountName} />
-                <Row label="Account number" value={SITE.bankDetails.accountNumber} mono />
+                <Row label="Bank" value={order.bank} />
+                <Row label="Account name" value={order.accountName} />
+                <Row label="Account number" value={order.accountNumber} mono />
                 <Row label="Amount" value={`${money(order.totalUsd)} ${order.currency}`} />
                 <Row label="Reference" value={order.reference} mono />
               </div>

@@ -6,7 +6,7 @@ import { CartDrawer, BagToast } from "@/components/cart-drawer";
 import { SiteFooter } from "@/components/site-footer";
 import { StoreProvider } from "@/components/store";
 import { getRegion } from "@/lib/region";
-import { SITE } from "@/lib/site";
+import { SITE, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
   description:
     "Morena Collection blends small-batch perfume in Iwo, Osun State, and carries leather bags, footwear and clothing. Local pricing, worldwide delivery.",
-  metadataBase: new URL("https://morenacollection.com"),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     title: `${SITE.brand} — Perfume, made properly`,
     description:

@@ -1,7 +1,15 @@
+/**
+ * Canonical site address. NEXT_PUBLIC_SITE_URL is read at build time, so a
+ * deploy with `NEXT_PUBLIC_SITE_URL=https://yourdomain.com` switches the
+ * sitemap, canonical links and share previews in one go.
+ */
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://morenacollection.com").replace(/\/$/, "");
+
 export const SITE = {
   brand: "Morena Collection",
   brandShort: "Morena",
   tagline: "Perfume, first. Everything else, considered.",
+  url: SITE_URL,
   address: "Iwo, Osun State, Nigeria",
   addressLines: ["Morena Collection", "Iwo", "Osun State, Nigeria"],
   whatsapp: "2349121303157",

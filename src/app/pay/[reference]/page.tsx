@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getOrderByReference } from "@/lib/catalog";
+import { getBankDetails } from "@/lib/settings";
 import { PaymentPanel, type PayOrder } from "./payment-panel";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: "Payment" };
 
 export default async function PayPage({ params }: { params: Promise<{ reference: string }> }) {
   const { reference } = await params;
-  const order = await getOrderByReference(reference);
+  const [order, bankDetails] = await Promise.all([getOrderByReference(reference), getBankDetails()]);
   if (!order) notFound();
   if (order.status === "paid" || order.status === "fulfilled") {
     redirect(`/orders/${order.reference}`);
@@ -26,6 +27,9 @@ export default async function PayPage({ params }: { params: Promise<{ reference:
     totalUsd: Number(order.totalUsd),
     subtotalUsd: Number(order.subtotalUsd),
     shippingUsd: Number(order.shippingUsd),
+    bank: bankDetails.bank,
+    accountName: bankDetails.accountName,
+    accountNumber: bankDetails.accountNumber,
     items: order.items.map((item) => ({
       name: item.name,
       quantity: item.quantity,
