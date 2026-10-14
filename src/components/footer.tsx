@@ -11,8 +11,7 @@ export function Footer() {
         <div>
           <Logo withTagline />
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-muted">
-            A small house of goods from Iwo, Osun State. We blend perfume first, and carry leather,
-            footwear and clothing we would use ourselves.
+            We blend perfume first, and carry leather, footwear and clothing we would use ourselves.
           </p>
           <div className="mt-5 flex flex-col gap-2 text-[13px]">
             <a href={whatsappLink("Hello Morena Collection, I have a question.")} className="link w-fit" target="_blank" rel="noreferrer">
