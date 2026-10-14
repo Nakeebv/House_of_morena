@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import type { Product } from "@/lib/catalog";
 import { useStore } from "./store";
@@ -13,6 +14,7 @@ export function ProductCard({
   priority?: boolean;
 }) {
   const { money, add } = useStore();
+  const [failed, setFailed] = useState(false);
   const soldOut = product.stock <= 0;
   const onSale = product.compareUsd != null && product.compareUsd > product.priceUsd;
 
@@ -23,7 +25,7 @@ export function ProductCard({
         className="relative block overflow-hidden rounded-[22px] bg-mist"
       >
         <Tilt className="aspect-square" strength={7}>
-          {product.image ? (
+          {product.image && !failed ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={product.image.url}
@@ -33,10 +35,12 @@ export function ProductCard({
               decoding="async"
               width={1000}
               height={1000}
+              onError={() => setFailed(true)}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[11px] tracking-[0.18em] text-muted">
-              MORENA
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 text-[11px] tracking-[0.18em] text-muted">
+              <span className="text-[14px] font-semibold tracking-[0.24em]">MORENA</span>
+              <span className="text-[8.5px] tracking-[0.3em]">COLLECTION</span>
             </div>
           )}
         </Tilt>

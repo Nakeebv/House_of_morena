@@ -657,7 +657,12 @@ async function seed() {
       priceUsd: "135.00",
       stock: 9,
       sortOrder: 13,
-      images: [{ url: px(30725738), alt: "Tan leather ankle boot" }],
+      images: [
+        {
+          url: "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/ba/Brown_leather_boots_on_a_wood_floor_%28Unsplash%29.jpg/1280px-Brown_leather_boots_on_a_wood_floor_%28Unsplash%29.jpg",
+          alt: "Tan leather ankle boots on a wooden floor",
+        },
+      ],
     },
     {
       name: "Court Sneaker",

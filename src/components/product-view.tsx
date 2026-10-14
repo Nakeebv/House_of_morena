@@ -44,13 +44,15 @@ export function AddToBagButton({
 export function ProductGallery({ product }: { product: Product }) {
   const images = product.gallery.length > 0 ? product.gallery : [];
   const [active, setActive] = useState(0);
+  const [failed, setFailed] = useState<Record<string, boolean>>({});
   const current = images[active] ?? null;
+  const visible = current && !failed[current.url];
 
   return (
     <div>
       <div className="overflow-hidden rounded-[26px] bg-mist">
         <Tilt className="aspect-square" strength={5}>
-          {current ? (
+          {visible ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={current.url}
@@ -59,14 +61,22 @@ export function ProductGallery({ product }: { product: Product }) {
               className="h-full w-full object-cover fade"
               width={1000}
               height={1000}
+              onError={() => setFailed((f) => ({ ...f, [current.url]: true }))}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[11px] tracking-[0.2em] text-muted">
-              MORENA
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-[11px] tracking-[0.2em] text-muted">
+              <span className="text-[15px] font-semibold tracking-[0.24em]">MORENA</span>
+              <span className="text-[9px]">COLLECTION</span>
             </div>
           )}
         </Tilt>
       </div>
+
+      {visible ? null : (
+        <p className="mt-2 text-center text-[11.5px] text-muted">
+          Photo coming shortly — message us to see this piece today.
+        </p>
+      )}
 
       {images.length > 1 ? (
         <div className="mt-3 flex gap-3">
@@ -75,13 +85,19 @@ export function ProductGallery({ product }: { product: Product }) {
               key={image.url}
               type="button"
               onClick={() => setActive(index)}
-              className={`h-16 w-16 overflow-hidden rounded-xl border transition-colors ${
+              className={`h-20 w-20 overflow-hidden rounded-2xl border transition-colors ${
                 index === active ? "border-ink" : "border-line hover:border-muted"
-              }`}
+              } ${failed[image.url] ? "hidden" : ""}`}
               aria-label={`View image ${index + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={image.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+              <img
+                src={image.url}
+                alt=""
+                className="h-full w-full object-cover"
+                loading="lazy"
+                onError={() => setFailed((f) => ({ ...f, [image.url]: true }))}
+              />
             </button>
           ))}
         </div>
