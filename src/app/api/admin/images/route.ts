@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { productImages } from "@/db/schema";
 import { isAdmin } from "@/lib/admin";
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "That image is too large. Keep it under 3 MB." }, { status: 400 });
   }
 
-  const inserted = await db
+  const inserted = await getDb()
     .insert(productImages)
     .values({
       productId: body?.productId ?? null,
@@ -48,6 +48,6 @@ export async function DELETE(request: Request) {
   if (!(await isAdmin())) return Response.json({ error: "Not authorised" }, { status: 401 });
   const body = (await request.json().catch(() => null)) as { id?: number } | null;
   if (!body?.id) return Response.json({ error: "Missing image id." }, { status: 400 });
-  await db.delete(productImages).where(eq(productImages.id, Number(body.id)));
+  await getDb().delete(productImages).where(eq(productImages.id, Number(body.id)));
   return Response.json({ ok: true });
 }

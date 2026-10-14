@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { orderItems, orders, products } from "@/db/schema";
 import { getOrderByReference, updateOrder } from "@/lib/catalog";
 import { notifyPaymentReceived } from "@/lib/email";
@@ -107,10 +107,10 @@ async function notifyBestEffort(reference: string) {
 }
 
 async function reduceStock(orderId: number) {
-  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  const items = await getDb().select().from(orderItems).where(eq(orderItems.orderId, orderId));
   for (const item of items) {
     if (item.productId == null) continue;
-    await db
+    await getDb()
       .update(products)
       .set({
         stock: sql`greatest(0, ${products.stock} - ${item.quantity})`,

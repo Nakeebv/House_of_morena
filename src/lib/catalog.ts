@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import {
   categories,
   orderItems,
@@ -48,7 +48,7 @@ function toRef(row: ProductImageRow): ImageRef {
 async function imagesFor(productIds: number[]) {
   const map = new Map<number, ImageRef[]>();
   if (productIds.length === 0) return map;
-  const rows = await db
+  const rows = await getDb()
     .select()
     .from(productImages)
     .where(inArray(productImages.productId, productIds))
@@ -94,7 +94,7 @@ function hydrate(
 
 export async function getCategories(): Promise<Category[]> {
   await ensureSeed();
-  return db
+  return getDb()
     .select({
       id: categories.id,
       name: categories.name,
@@ -123,7 +123,7 @@ export async function getProducts(options?: {
     filters.push(sql`(lower(${products.name}) like ${term} or lower(coalesce(${products.shortDescription}, '')) like ${term})`);
   }
 
-  const rows = await db
+  const rows = await getDb()
     .select({ product: products, category: categories })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
@@ -137,7 +137,7 @@ export async function getProducts(options?: {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   await ensureSeed();
-  const rows = await db
+  const rows = await getDb()
     .select({ product: products, category: categories })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
@@ -150,7 +150,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 export async function getProductsByIds(ids: number[]): Promise<Product[]> {
   if (ids.length === 0) return [];
-  const rows = await db
+  const rows = await getDb()
     .select({ product: products, category: categories })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
@@ -160,10 +160,10 @@ export async function getProductsByIds(ids: number[]): Promise<Product[]> {
 }
 
 export async function getProductForEdit(id: number) {
-  const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  const rows = await getDb().select().from(products).where(eq(products.id, id)).limit(1);
   if (rows.length === 0) return null;
   const gallery = (await imagesFor([id])).get(id) ?? [];
-  const imageRows = await db
+  const imageRows = await getDb()
     .select()
     .from(productImages)
     .where(eq(productImages.productId, id))
@@ -243,7 +243,7 @@ export async function createOrder(input: NewOrderInput) {
   const totalUsd = subtotalUsd + shippingUsd;
   const reference = newReference();
 
-  const inserted = await db
+  const inserted = await getDb()
     .insert(orders)
     .values({
       reference,
@@ -271,7 +271,7 @@ export async function createOrder(input: NewOrderInput) {
 
   const order = inserted[0];
 
-  await db.insert(orderItems).values(
+  await getDb().insert(orderItems).values(
     lines.map((line) => ({
       orderId: order.id,
       productId: line.product.id,
@@ -292,27 +292,27 @@ export type OrderWithItems = OrderRow & {
 };
 
 export async function getOrderByReference(reference: string): Promise<OrderWithItems | null> {
-  const rows = await db.select().from(orders).where(eq(orders.reference, reference)).limit(1);
+  const rows = await getDb().select().from(orders).where(eq(orders.reference, reference)).limit(1);
   if (rows.length === 0) return null;
-  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, rows[0].id));
+  const items = await getDb().select().from(orderItems).where(eq(orderItems.orderId, rows[0].id));
   return { ...rows[0], items };
 }
 
 export async function listOrders(limit = 100) {
-  return db.select().from(orders).orderBy(desc(orders.createdAt)).limit(limit);
+  return getDb().select().from(orders).orderBy(desc(orders.createdAt)).limit(limit);
 }
 
 export async function listOrderItems(orderIds: number[]) {
   if (orderIds.length === 0) return [];
-  return db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds));
+  return getDb().select().from(orderItems).where(inArray(orderItems.orderId, orderIds));
 }
 
 export async function updateOrder(id: number, patch: Partial<typeof orders.$inferInsert>) {
-  await db.update(orders).set(patch).where(eq(orders.id, id));
+  await getDb().update(orders).set(patch).where(eq(orders.id, id));
 }
 
 export async function getOrderById(id: number) {
-  const rows = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  const rows = await getDb().select().from(orders).where(eq(orders.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
@@ -338,7 +338,7 @@ export type Buyer = {
 
 export async function listBuyers(): Promise<Buyer[]> {
   await ensureSeed();
-  const rows = await db
+  const rows = await getDb()
     .select({
       phone: orders.customerPhone,
       name: sql<string>`max(${orders.customerName})`,
@@ -362,7 +362,7 @@ export async function listBuyers(): Promise<Buyer[]> {
 
 /** Sales split by where the order came from. */
 export async function salesByChannel() {
-  const rows = await db
+  const rows = await getDb()
     .select({
       source: orders.source,
       ordersCount: sql<number>`count(*)::int`,
@@ -385,7 +385,7 @@ export async function salesByChannel() {
 
 /** Every order a given buyer has placed, newest first. */
 export async function ordersByBuyer(phone: string) {
-  return db
+  return getDb()
     .select()
     .from(orders)
     .where(eq(orders.customerPhone, phone))
@@ -394,7 +394,7 @@ export async function ordersByBuyer(phone: string) {
 
 export async function dashboardStats() {
   await ensureSeed();
-  const [totals] = await db
+  const [totals] = await getDb()
     .select({
       orderCount: sql<number>`count(*)::int`,
       paidCount: sql<number>`count(*) filter (where ${orders.status} in ('paid','fulfilled'))::int`,
@@ -404,7 +404,7 @@ export async function dashboardStats() {
     })
     .from(orders);
 
-  const [stock] = await db
+  const [stock] = await getDb()
     .select({
       liveProducts: sql<number>`count(*) filter (where ${products.status} = 'live')::int`,
       draftProducts: sql<number>`count(*) filter (where ${products.status} = 'draft')::int`,
@@ -412,7 +412,7 @@ export async function dashboardStats() {
     })
     .from(products);
 
-  const top = await db
+  const top = await getDb()
     .select({
       name: orderItems.name,
       slug: orderItems.slug,
@@ -424,7 +424,7 @@ export async function dashboardStats() {
     .orderBy(desc(sql`sum(${orderItems.quantity} * ${orderItems.unitPriceUsd})`))
     .limit(5);
 
-  const recent = await db.select().from(orders).orderBy(desc(orders.createdAt)).limit(6);
+  const recent = await getDb().select().from(orders).orderBy(desc(orders.createdAt)).limit(6);
 
   return { totals, stock, top, recent };
 }
@@ -449,10 +449,10 @@ export function ensureSeed() {
 }
 
 async function seed() {
-  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(products);
+  const [{ count }] = await getDb().select({ count: sql<number>`count(*)::int` }).from(products);
   if (count > 0) return;
 
-  const cats = await db
+  const cats = await getDb()
     .insert(categories)
     .values([
       { name: "Perfume", slug: "perfumes", tagline: "Our first language. Blended for staying power.", sortOrder: 1 },
@@ -757,14 +757,14 @@ async function seed() {
 
   for (const row of rows) {
     const { images, ...values } = row;
-    const inserted = await db
+    const inserted = await getDb()
       .insert(products)
       .values({ ...values, status: "live" })
       .onConflictDoNothing()
       .returning();
     const product = inserted[0];
     if (!product) continue;
-    await db.insert(productImages).values(
+    await getDb().insert(productImages).values(
       images.map((image, index) => ({
         productId: product.id,
         url: image.url,

@@ -1,5 +1,5 @@
 import { desc } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { messages, type MessageRow } from "@/db/schema";
 import { formatFromUsd, type CurrencyCode } from "./currency";
 import { SITE } from "./site";
@@ -114,7 +114,7 @@ export async function sendEmail(input: SendInput): Promise<{ ok: boolean; status
 
   // No transport configured — record it so nothing is silently dropped.
   if (!apiKey) {
-    await db.insert(messages).values({
+    await getDb().insert(messages).values({
       orderId: input.orderId ?? null,
       toEmail: input.to,
       toName: input.toName ?? null,
@@ -151,7 +151,7 @@ export async function sendEmail(input: SendInput): Promise<{ ok: boolean; status
     };
 
     const ok = response.ok;
-    await db.insert(messages).values({
+    await getDb().insert(messages).values({
       orderId: input.orderId ?? null,
       toEmail: input.to,
       toName: input.toName ?? null,
@@ -169,7 +169,7 @@ export async function sendEmail(input: SendInput): Promise<{ ok: boolean; status
       : { ok: false, status: "failed", error: payload.message ?? "The provider rejected the message." };
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Network error";
-    await db.insert(messages).values({
+    await getDb().insert(messages).values({
       orderId: input.orderId ?? null,
       toEmail: input.to,
       toName: input.toName ?? null,
@@ -308,7 +308,7 @@ export async function notifyShipping(order: NotifyOrder, courier: string, tracki
 }
 
 export async function listMessages(limit = 60): Promise<MessageRow[]> {
-  return db.select().from(messages).orderBy(desc(messages.createdAt)).limit(limit);
+  return getDb().select().from(messages).orderBy(desc(messages.createdAt)).limit(limit);
 }
 
 export function emailTransportConfigured() {

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { productImages } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return new Response("Bad request", { status: 400 });
   }
 
-  const rows = await db
+  const rows = await getDb()
     .select()
     .from(productImages)
     .where(eq(productImages.id, numericId))

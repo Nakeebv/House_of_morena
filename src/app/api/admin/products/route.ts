@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { eq, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { productImages, products } from "@/db/schema";
 import { isAdmin } from "@/lib/admin";
 import { toUsd, CURRENCIES, type CurrencyCode } from "@/lib/currency";
@@ -40,7 +40,7 @@ function slugify(value: string) {
 async function uniqueSlug(base: string, ignoreId?: number) {
   let candidate = base;
   for (let attempt = 0; attempt < 12; attempt += 1) {
-    const rows = await db
+    const rows = await getDb()
       .select({ id: products.id })
       .from(products)
       .where(eq(products.slug, candidate))
@@ -66,13 +66,13 @@ function resolveUsd(
 async function attachImages(productId: number, imageIds: number[], imageUrls: { url: string; alt?: string }[]) {
   const offset = imageIds.length;
   for (const [index, id] of imageIds.entries()) {
-    await db
+    await getDb()
       .update(productImages)
       .set({ productId, sortOrder: index })
       .where(eq(productImages.id, id));
   }
   if (imageUrls.length > 0) {
-    await db.insert(productImages).values(
+    await getDb().insert(productImages).values(
       imageUrls.map((image, index) => ({
         productId,
         url: image.url,
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
   const slug = await uniqueSlug(slugify(body.slug?.trim() || body.name));
 
-  const inserted = await db
+  const inserted = await getDb()
     .insert(products)
     .values({
       name: body.name.trim(),
@@ -163,7 +163,7 @@ export async function PATCH(request: Request) {
   if (body.featured !== undefined) patch.featured = Boolean(body.featured);
   if (body.sortOrder !== undefined) patch.sortOrder = Number(body.sortOrder) || 0;
 
-  await db.update(products).set(patch).where(eq(products.id, id));
+  await getDb().update(products).set(patch).where(eq(products.id, id));
 
   if (body.imageIds || body.imageUrls) {
     await attachImages(id, body.imageIds ?? [], body.imageUrls ?? []);
@@ -180,8 +180,8 @@ export async function DELETE(request: Request) {
   if (!body?.id) return Response.json({ error: "Missing product id." }, { status: 400 });
 
   const id = Number(body.id);
-  await db.delete(productImages).where(eq(productImages.productId, id));
-  await db.delete(products).where(eq(products.id, id));
+  await getDb().delete(productImages).where(eq(productImages.productId, id));
+  await getDb().delete(products).where(eq(products.id, id));
 
   revalidatePath("/");
   revalidatePath("/shop");
@@ -190,7 +190,7 @@ export async function DELETE(request: Request) {
 
 export async function GET() {
   if (!(await isAdmin())) return Response.json({ error: "Not authorised" }, { status: 401 });
-  const rows = await db
+  const rows = await getDb()
     .select({ id: products.id, stock: products.stock })
     .from(products)
     .where(sql`true`);

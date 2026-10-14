@@ -128,6 +128,9 @@ put_secret ADMIN_SESSION_SECRET "$ADMIN_SESSION_SECRET"
 step "Building for Cloudflare"
 npx opennextjs-cloudflare build
 
+step "Patching the build for Next 16.4 (preview-props manifest)"
+./scripts/patch-opennext.sh
+
 step "Deploying"
 npx wrangler deploy
 
@@ -142,6 +145,5 @@ echo
 echo "    Custom domain:  Cloudflare dashboard → Workers & Pages →"
 echo "                     house-of-morena → Settings → Domains & Routes"
 echo
-echo "    Redeploy after changes:"
-echo "        ./scripts/prepare-cloudflare.sh"
-echo "        npx opennextjs-cloudflare build && npx wrangler deploy"
+    echo "    Redeploy after changes:"
+    echo "        npx opennextjs-cloudflare build && ./scripts/patch-opennext.sh && npx wrangler deploy"
