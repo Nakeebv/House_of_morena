@@ -91,7 +91,9 @@ export function ProductGallery({ product }: { product: Product }) {
     ) : null;
 
   return (
-    <div className="md:grid md:grid-cols-[84px_1fr] md:gap-4">
+    // Two columns only when there is a thumbnail rail; a single photo fills
+    // the whole gallery column instead of squeezing into the 84px rail.
+    <div className={visible.length > 1 ? "md:grid md:grid-cols-[84px_1fr] md:gap-4" : ""}>
       {/* Thumbnail rail — desktop */}
       {visible.length > 1 ? (
         <div className="order-first hidden flex-col gap-3 md:flex">
