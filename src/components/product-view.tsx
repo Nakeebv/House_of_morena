@@ -42,53 +42,68 @@ export function AddToBagButton({
 }
 
 export function ProductGallery({ product }: { product: Product }) {
-  const images = product.gallery.length > 0 ? product.gallery : [];
-  const [active, setActive] = useState(0);
   const [failed, setFailed] = useState<Record<string, boolean>>({});
-  const current = images[active] ?? null;
-  const visible = current && !failed[current.url];
+  const [active, setActive] = useState(0);
+  const [zooming, setZooming] = useState(false);
+  const [origin, setOrigin] = useState("50% 50%");
+
+  // Photos that fail to load drop out of the visible list entirely.
+  const visible = product.gallery.filter((image) => !failed[image.url]);
+  const index = Math.min(active, Math.max(0, visible.length - 1));
+  const current = visible[index] ?? null;
+
+  function markFailed(url: string) {
+    setFailed((f) => ({ ...f, [url]: true }));
+  }
+
+  function goTo(next: number) {
+    if (visible.length === 0) return;
+    setActive((next + visible.length) % visible.length);
+  }
+
+  function onZoomMove(event: React.MouseEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    setOrigin(`${x}% ${y}%`);
+  }
+
+  const arrows =
+    visible.length > 1 ? (
+      <>
+        <button
+          type="button"
+          onClick={() => goTo(index - 1)}
+          className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-[16px] shadow-md backdrop-blur transition-opacity hover:bg-white"
+          aria-label="Previous image"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          onClick={() => goTo(index + 1)}
+          className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-[16px] shadow-md backdrop-blur transition-opacity hover:bg-white"
+          aria-label="Next image"
+        >
+          ›
+        </button>
+      </>
+    ) : null;
 
   return (
-    <div>
-      <div className="overflow-hidden rounded-[26px] bg-mist">
-        <Tilt className="aspect-square" strength={5}>
-          {visible ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={current.url}
-              src={current.url}
-              alt={current.alt || product.name}
-              className="h-full w-full object-cover fade"
-              width={1000}
-              height={1000}
-              onError={() => setFailed((f) => ({ ...f, [current.url]: true }))}
-            />
-          ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-[11px] tracking-[0.2em] text-muted">
-              <span className="text-[15px] font-semibold tracking-[0.24em]">MORENA</span>
-              <span className="text-[9px]">COLLECTION</span>
-            </div>
-          )}
-        </Tilt>
-      </div>
-
-      {visible ? null : (
-        <p className="mt-2 text-center text-[11.5px] text-muted">
-          Photo coming shortly — message us to see this piece today.
-        </p>
-      )}
-
-      {images.length > 1 ? (
-        <div className="mt-3 flex gap-3">
-          {images.map((image, index) => (
+    <div className="md:grid md:grid-cols-[84px_1fr] md:gap-4">
+      {/* Thumbnail rail — desktop */}
+      {visible.length > 1 ? (
+        <div className="order-first hidden flex-col gap-3 md:flex">
+          {visible.map((image, i) => (
             <button
               key={image.url}
               type="button"
-              onClick={() => setActive(index)}
-              className={`h-20 w-20 overflow-hidden rounded-2xl border transition-colors ${
-                index === active ? "border-ink" : "border-line hover:border-muted"
-              } ${failed[image.url] ? "hidden" : ""}`}
-              aria-label={`View image ${index + 1}`}
+              onClick={() => setActive(i)}
+              className={`h-[84px] w-[84px] overflow-hidden rounded-2xl border-2 transition-colors ${
+                i === index ? "border-ink" : "border-transparent hover:border-line"
+              }`}
+              aria-label={`View image ${i + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -96,12 +111,83 @@ export function ProductGallery({ product }: { product: Product }) {
                 alt=""
                 className="h-full w-full object-cover"
                 loading="lazy"
-                onError={() => setFailed((f) => ({ ...f, [image.url]: true }))}
+                onError={() => markFailed(image.url)}
               />
             </button>
           ))}
         </div>
       ) : null}
+
+      {/* Main stage — desktop, Apple-style zoom on hover */}
+      <div className="hidden md:block">
+        <div
+          className="relative aspect-square overflow-hidden rounded-[30px] bg-mist"
+          onMouseMove={onZoomMove}
+          onMouseEnter={() => setZooming(true)}
+          onMouseLeave={() => setZooming(false)}
+        >
+          {current ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={current.url}
+              src={current.url}
+              alt={current.alt || product.name}
+              className="h-full w-full object-cover transition-transform duration-500"
+              style={{ transformOrigin: origin, transform: zooming ? "scale(1.7)" : "scale(1)" }}
+              onError={() => markFailed(current.url)}
+            />
+          ) : (
+            <BrandTile />
+          )}
+          {arrows}
+        </div>
+        <p className="mt-2 text-right text-[11px] text-muted">
+          {visible.length > 1 ? `Image ${index + 1} of ${visible.length} · hover to zoom` : ""}
+        </p>
+      </div>
+
+      {/* Mobile */}
+      <div className="md:hidden">
+        <div className="relative aspect-square overflow-hidden rounded-[26px] bg-mist">
+          {current ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={current.url}
+              src={current.url}
+              alt={current.alt || product.name}
+              className="h-full w-full object-cover"
+              onError={() => markFailed(current.url)}
+            />
+          ) : (
+            <BrandTile />
+          )}
+          {arrows}
+        </div>
+        {visible.length > 1 ? (
+          <div className="mt-3 flex justify-center gap-2">
+            {visible.map((image, i) => (
+              <button
+                key={image.url}
+                type="button"
+                onClick={() => setActive(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === index ? "w-5 bg-ink" : "w-1.5 bg-line"
+                }`}
+                aria-label={`Image ${i + 1}`}
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function BrandTile() {
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-[11px] tracking-[0.2em] text-muted">
+      <span className="text-[16px] font-semibold tracking-[0.26em]">MORENA</span>
+      <span className="text-[9px]">COLLECTION</span>
     </div>
   );
 }

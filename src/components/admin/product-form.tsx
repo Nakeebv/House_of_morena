@@ -48,9 +48,14 @@ export type ProductFormValues = {
 
 const PREVIEW: CurrencyCode[] = ["NGN", "USD", "GBP", "EUR"];
 
-async function fileToDataUrl(file: File): Promise<string> {
+/**
+ * Resizes a photo in the browser to 1400px JPEG before upload — smaller
+ * payloads, faster pages. Handles the iPhone camera's EXIF rotation, and
+ * produces a clean JPEG blob even when the source was PNG/WebP.
+ */
+async function toUploadBlob(file: File): Promise<Blob> {
   try {
-    const bitmap = await createImageBitmap(file);
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
     const max = 1400;
     const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
@@ -59,15 +64,33 @@ async function fileToDataUrl(file: File): Promise<string> {
     const context = canvas.getContext("2d");
     if (!context) throw new Error("no canvas");
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.85);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85),
+    );
+    if (blob) return blob;
+    throw new Error("browser could not re-encode");
   } catch {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error("Could not read the file"));
-      reader.readAsDataURL(file);
-    });
+    // The browser could not decode the file (typical for iPhone HEIC photos).
+    // Pass the original through when it is a type the server accepts.
+    if (["image/jpeg", "image/png", "image/webp"].includes(file.type)) return file;
+    throw new Error(
+      "That photo is in a format the browser cannot read (iPhone HEIC?). Convert it to JPG and try again.",
+    );
   }
+}
+
+/** Sends the image as raw bytes — half the payload of a base64 JSON envelope. */
+async function uploadImageBlob(blob: Blob, alt: string): Promise<{ id: number; url: string }> {
+  const response = await fetch("/api/admin/images", {
+    method: "POST",
+    headers: { "Content-Type": blob.type || "image/jpeg", "x-image-alt": alt },
+    body: blob,
+  });
+  const data = (await response.json()) as { id?: number; url?: string; error?: string };
+  if (!response.ok || !data.url || typeof data.id !== "number") {
+    throw new Error(data.error ?? "The image could not be uploaded.");
+  }
+  return { id: data.id, url: data.url };
 }
 
 export function ProductForm({
@@ -106,6 +129,7 @@ export function ProductForm({
   const [urlInput, setUrlInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const amount = Number(priceAmount.replace(/,/g, "")) || 0;
@@ -116,32 +140,45 @@ export function ProductForm({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => setValues((current) => ({ ...current, [key]: event.target.value }));
 
+  function moveImage(index: number, delta: number) {
+    setImages((current) => {
+      const next = [...current];
+      const target = index + delta;
+      if (target < 0 || target >= next.length) return current;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  function makeMain(index: number) {
+    setImages((current) => [current[index], ...current.filter((_, i) => i !== index)]);
+  }
+
   async function uploadFiles(files: FileList | File[]) {
     const list = Array.from(files).filter((file) => file.type.startsWith("image/"));
     if (list.length === 0) return;
     setUploading(true);
     setError(null);
+    let index = 0;
+    let failures = 0;
     try {
       for (const file of list) {
-        const dataUrl = await fileToDataUrl(file);
-        const response = await fetch("/api/admin/images", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dataUrl, alt: values.name }),
-        });
-        const data = (await response.json()) as { id?: number; url?: string; error?: string };
-        const uploadedId = data.id;
-        const uploadedUrl = data.url;
-        if (!response.ok || !uploadedUrl) {
-          setError(data.error ?? "One image could not be uploaded.");
-          continue;
+        index += 1;
+        setStatus(`Uploading ${index} of ${list.length}…`);
+        try {
+          const blob = await toUploadBlob(file);
+          const uploaded = await uploadImageBlob(blob, values.name || file.name);
+          setImages((current) => [...current, { id: uploaded.id, url: uploaded.url, alt: values.name }]);
+        } catch (fileError) {
+          failures += 1;
+          setError(fileError instanceof Error ? fileError.message : "One image could not be uploaded.");
         }
-        const next: FormImage = { id: uploadedId, url: uploadedUrl, alt: values.name };
-        setImages((current) => [...current, next]);
       }
     } finally {
       setUploading(false);
+      setStatus(null);
     }
+    if (failures === 0 && index > 0) setError(null);
   }
 
   async function removeImage(index: number) {
@@ -264,7 +301,7 @@ export function ProductForm({
             >
               <p className="text-[13.5px] font-medium">Drop images here</p>
               <p className="mt-1 text-[12px] text-muted">
-                JPG, PNG or WebP · the first photo is the main one
+                JPG, PNG or WebP · add as many as you like · the first photo is the main one
               </p>
               <input
                 ref={fileRef}
@@ -278,33 +315,69 @@ export function ProductForm({
                 }}
               />
               <button type="button" className="btn btn-quiet btn-sm mt-4" onClick={() => fileRef.current?.click()}>
-                {uploading ? "Uploading…" : "Choose files"}
+                {uploading ? status ?? "Uploading…" : "Choose files"}
               </button>
             </div>
 
             {images.length > 0 ? (
               <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {images.map((image, index) => (
-                  <div key={`${image.url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl bg-mist">
+                  <div
+                    key={`${image.url}-${index}`}
+                    className="group relative aspect-square overflow-hidden rounded-xl bg-mist"
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={image.url} alt="" className="h-full w-full object-cover" />
                     {index === 0 ? (
                       <span className="absolute left-1.5 top-1.5 rounded-full bg-ink px-2 py-0.5 text-[9.5px] font-medium text-white">
                         Main
                       </span>
-                    ) : null}
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => makeMain(index)}
+                        className="absolute left-1.5 top-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[9.5px] font-medium text-ink shadow-sm transition-opacity hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
+                      >
+                        Make main
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => void removeImage(index)}
-                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[13px] text-ink shadow-sm"
+                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[13px] text-ink shadow-sm sm:opacity-0 sm:group-hover:opacity-100"
                       aria-label="Remove image"
                     >
                       ×
                     </button>
+                    <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 bg-gradient-to-t from-black/45 to-transparent pb-1.5 pt-4 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => moveImage(index, -1)}
+                        disabled={index === 0}
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[12px] text-ink disabled:opacity-30"
+                        aria-label="Move image left"
+                      >
+                        ←
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveImage(index, 1)}
+                        disabled={index === images.length - 1}
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[12px] text-ink disabled:opacity-30"
+                        aria-label="Move image right"
+                      >
+                        →
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
             ) : null}
+
+            <p className="mt-3 text-[11.5px] text-muted">
+              Hover a photo to reorder it (← →) or set it as the main image. Removed photos are deleted
+              when you remove them here.
+            </p>
 
             <div className="mt-4 flex gap-2">
               <input
