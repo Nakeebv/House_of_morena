@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { BuyersTable, type BuyerOrder, type BuyerRow } from "@/components/admin/buyers-table";
 import { listBuyers, listOrders, listOrderItems, SOURCE_LABELS, type OrderSource } from "@/lib/catalog";
-import { emailTransportConfigured } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -78,7 +77,7 @@ export default async function AdminBuyersPage() {
       </header>
 
       <div className="mt-8">
-        <BuyersTable buyers={rows} emailReady={emailTransportConfigured()} />
+        <BuyersTable buyers={rows} />
       </div>
     </div>
   );

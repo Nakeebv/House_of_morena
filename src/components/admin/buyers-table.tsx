@@ -56,13 +56,7 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-export function BuyersTable({
-  buyers,
-  emailReady,
-}: {
-  buyers: BuyerRow[];
-  emailReady: boolean;
-}) {
+export function BuyersTable({ buyers }: { buyers: BuyerRow[] }) {
   const [open, setOpen] = useState<string | null>(null);
   const [composer, setComposer] = useState<BuyerRow | null>(null);
 
@@ -82,18 +76,6 @@ export function BuyersTable({
 
   return (
     <>
-      {!emailReady ? (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white px-5 py-4">
-          <p className="text-[12.5px] leading-relaxed text-muted">
-            Messages you write are saved and queued. Add a <span className="nums">RESEND_API_KEY</span>{" "}
-            to deliver them to real inboxes.
-          </p>
-          <Link href="/admin/settings" className="btn btn-ghost btn-sm shrink-0">
-            Email setup
-          </Link>
-        </div>
-      ) : null}
-
       <div className="flex flex-col gap-2.5">
         {buyers.map((buyer) => {
           const currency = buyer.currency as CurrencyCode;

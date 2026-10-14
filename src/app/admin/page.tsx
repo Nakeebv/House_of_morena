@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { dashboardStats, listBuyers, salesByChannel, SOURCE_LABELS } from "@/lib/catalog";
-import {
-  emailTransportConfigured,
-  listMessages,
-  sellerEmailConfigured,
-} from "@/lib/email";
+import { listMessages } from "@/lib/email";
 import { formatFromUsd, type CurrencyCode } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
@@ -63,8 +59,6 @@ export default async function AdminDashboard() {
     },
   ];
 
-  const emailReady = emailTransportConfigured();
-
   return (
     <div>
       <header className="flex flex-wrap items-end justify-between gap-5">
@@ -88,25 +82,6 @@ export default async function AdminDashboard() {
           </Link>
         </div>
       </header>
-
-      {!emailReady ? (
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white px-5 py-4">
-          <p className="text-[12.5px] leading-relaxed text-muted">
-            Order emails are being composed and queued, but not delivered yet. Add a{" "}
-            <span className="nums">RESEND_API_KEY</span> to turn them on.
-          </p>
-          <Link href="/admin/settings" className="btn btn-ghost btn-sm shrink-0">
-            Set up email
-          </Link>
-        </div>
-      ) : !sellerEmailConfigured() ? (
-        <div className="mt-6 rounded-2xl border border-line bg-white px-5 py-4">
-          <p className="text-[12.5px] leading-relaxed text-muted">
-            Buyer emails are sending. Set <span className="nums">SELLER_EMAIL</span> to also get an
-            alert for every new order.
-          </p>
-        </div>
-      ) : null}
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (

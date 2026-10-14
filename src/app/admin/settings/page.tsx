@@ -1,44 +1,9 @@
-import type { ReactNode } from "react";
 import { BankDetailsForm } from "@/components/admin/bank-details-form";
-import { emailTransportConfigured, listMessages, sellerEmailConfigured } from "@/lib/email";
+import { listMessages } from "@/lib/email";
 import { getSettings } from "@/lib/settings";
 import { SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
-
-function Status({
-  ok,
-  label,
-  done,
-  todo,
-}: {
-  ok: boolean;
-  label: string;
-  done: string;
-  todo: ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-3.5 border-b border-line py-4 last:border-0">
-      <span
-        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-          ok ? "bg-[#e9f3ec] text-[#26603a]" : "bg-mist text-muted"
-        }`}
-      >
-        {ok ? "✓" : "–"}
-      </span>
-      <div className="min-w-0">
-        <p className="text-[13.5px] font-medium">{label}</p>
-        <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted">{ok ? done : todo}</p>
-      </div>
-    </div>
-  );
-}
-
-function Env({ name }: { name: string }) {
-  return (
-    <code className="nums rounded-md bg-mist px-1.5 py-0.5 text-[12px] text-ink-soft">{name}</code>
-  );
-}
 
 export default async function AdminSettingsPage() {
   const [messages, settings] = await Promise.all([listMessages(200), getSettings()]);
@@ -52,78 +17,31 @@ export default async function AdminSettingsPage() {
         <p className="eyebrow text-muted">Store</p>
         <h1 className="title mt-3">Setup</h1>
         <p className="mt-3 max-w-xl text-[13.5px] leading-relaxed text-muted">
-          Everything is already working. These are the only things left to switch on, and each one is
-          a single setting.
+          The settings you control as the owner — payment details, store identity and the messages
+          the store has sent.
         </p>
       </header>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="flex flex-col gap-6">
           <section className="rounded-2xl border border-line bg-white p-5 md:p-6">
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em]">Email</h2>
+            <h2 className="text-[15px] font-semibold tracking-[-0.01em]">Bank transfer details</h2>
             <p className="mt-2 text-[13px] leading-relaxed text-muted">
-              Buyers are emailed automatically when they order and when payment is confirmed. You can
-              also write to any buyer from the Buyers page.
+              Shown to buyers on the transfer step of checkout. Change them any time — the next
+              person who pays uses the new details.
             </p>
-
             <div className="mt-5">
-              <Status
-                ok={emailTransportConfigured()}
-                label="Sending enabled"
-                done="Messages are being delivered to real inboxes."
-                todo={
-                  <>
-                    Add <Env name="RESEND_API_KEY" /> to your environment. Until then every message is
-                    composed and saved, and shows as <em>queued</em> below.
-                  </>
-                }
-              />
-              <Status
-                ok={sellerEmailConfigured()}
-                label="You get new-order alerts"
-                done="Every new order is emailed to you as well."
-                todo={
-                  <>
-                    Add <Env name="SELLER_EMAIL" /> with your own address so each order reaches you
-                    directly.
-                  </>
-                }
-              />
-              <Status
-                ok={Boolean(process.env.EMAIL_FROM)}
-                label="Sending address"
-                done={`Sending as ${process.env.EMAIL_FROM}`}
-                todo={
-                  <>
-                    Add <Env name="EMAIL_FROM" /> as{" "}
-                    <span className="text-ink-soft">Morena Collection &lt;orders@yourdomain.com&gt;</span>{" "}
-                    and verify the domain in your email provider.
-                  </>
-                }
-              />
+              <BankDetailsForm initialValues={settings} />
             </div>
-
-            <div className="mt-6 rounded-2xl bg-mist p-5">
-              <p className="eyebrow text-muted">How to turn it on</p>
-              <ol className="mt-3 flex flex-col gap-2 text-[12.5px] leading-relaxed text-ink-soft">
-                <li>
-                  <span className="font-medium">1.</span> Create a free account at{" "}
-                  <span className="text-ink">resend.com</span>.
-                </li>
-                <li>
-                  <span className="font-medium">2.</span> Add and verify the domain you send from
-                  (or use their test address to try it).
-                </li>
-                <li>
-                  <span className="font-medium">3.</span> Copy the API key into your environment as{" "}
-                  <Env name="RESEND_API_KEY" />.
-                </li>
-                <li>
-                  <span className="font-medium">4.</span> Redeploy. Emails start sending immediately —
-                  nothing else to change.
-                </li>
-              </ol>
-            </div>
+            <p className="mt-4 rounded-xl bg-mist p-4 text-[12px] leading-relaxed text-ink-soft">
+              Currently set to:{" "}
+              <span className="font-medium">
+                {settings.bank_name || SITE.bankDetails.bank} ·{" "}
+                {settings.account_name || SITE.bankDetails.accountName} ·{" "}
+                <span className="nums">{settings.account_number || SITE.bankDetails.accountNumber}</span>
+              </span>
+              {!settings.account_number ? " (default placeholder — replace it)" : ""}
+            </p>
           </section>
 
           <section className="rounded-2xl border border-line bg-white p-5 md:p-6">
@@ -202,26 +120,6 @@ export default async function AdminSettingsPage() {
           </section>
 
           <section className="rounded-2xl border border-line bg-white p-5 md:p-6">
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em]">Bank transfer details</h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-muted">
-              Shown to buyers on the transfer step of checkout. Change them any time — the next
-              person who pays uses the new details.
-            </p>
-            <div className="mt-5">
-              <BankDetailsForm initialValues={settings} />
-            </div>
-            <p className="mt-4 rounded-xl bg-mist p-4 text-[12px] leading-relaxed text-ink-soft">
-              Currently set to:{" "}
-              <span className="font-medium">
-                {settings.bank_name || SITE.bankDetails.bank} ·{" "}
-                {settings.account_name || SITE.bankDetails.accountName} ·{" "}
-                <span className="nums">{settings.account_number || SITE.bankDetails.accountNumber}</span>
-              </span>
-              {!settings.account_number ? " (default placeholder — replace it)" : ""}
-            </p>
-          </section>
-
-          <section className="rounded-2xl border border-line bg-white p-5 md:p-6">
             <h2 className="text-[15px] font-semibold tracking-[-0.01em]">Payment</h2>
             <p className="mt-2 text-[13px] leading-relaxed text-muted">
               Bank transfer, WhatsApp and pay-on-delivery are live. Card payment is switched off
@@ -232,23 +130,6 @@ export default async function AdminSettingsPage() {
                 When you are ready for cards, Paystack or Flutterwave is the right choice — both
                 handle naira, dollars and mobile money. It is a small change to the checkout.
               </p>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-line bg-white p-5 md:p-6">
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em]">Admin sign-in</h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-muted">
-              Sessions last 12 hours and are signed. Sign-in is rate limited.
-            </p>
-            <div className="mt-4 flex flex-col gap-3 text-[12.5px]">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted">Password</span>
-                <Env name="ADMIN_PASSWORD" />
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted">Session secret</span>
-                <Env name="ADMIN_SESSION_SECRET" />
-              </div>
             </div>
           </section>
         </div>
