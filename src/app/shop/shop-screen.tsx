@@ -92,24 +92,24 @@ export async function ShopScreen({
           ))}
         </div>
 
-        <form className="flex items-center gap-2" action="/shop" method="get">
+        <form className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto md:flex-nowrap md:justify-end">
           {categorySlug ? <input type="hidden" name="category" value={categorySlug} /> : null}
           <input
             type="search"
             name="q"
             defaultValue={search ?? ""}
             placeholder="Search the collection"
-            className="field h-10 w-[190px] text-[13px] md:w-[220px]"
+            className="field h-10 min-w-0 flex-1 text-[13px] md:w-[220px] md:flex-none"
             aria-label="Search products"
           />
-          <select name="sort" defaultValue={activeSort} className="field h-10 w-[168px] text-[13px]" aria-label="Sort">
+          <select name="sort" defaultValue={activeSort} className="field h-10 w-[150px] shrink-0 text-[13px] md:w-[168px]" aria-label="Sort">
             {SORTS.map((option) => (
               <option key={option.key} value={option.key}>
                 {option.label}
               </option>
             ))}
           </select>
-          <button type="submit" className="btn btn-ghost btn-sm">
+          <button type="submit" className="btn btn-ghost btn-sm shrink-0">
             Go
           </button>
         </form>
