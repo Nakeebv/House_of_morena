@@ -12,11 +12,12 @@ const BLOCK_MS = 15 * 60 * 1000; // 15 minutes
 
 function adminPassword() {
   const value = process.env.ADMIN_PASSWORD;
-  return value && value.trim().length > 0 ? value : "REDACTED";
+  // No hardcoded default: an unset ADMIN_PASSWORD simply cannot sign in.
+  return value && value.trim().length > 0 ? value : null;
 }
 
 function secret() {
-  return process.env.ADMIN_SESSION_SECRET ?? "REDACTED";
+  return process.env.ADMIN_SESSION_SECRET ?? "";
 }
 
 /* ------------------------------------------------------------------ */
@@ -25,6 +26,7 @@ function secret() {
 
 export function checkPassword(input: string) {
   const expected = adminPassword();
+  if (!expected) return false;
   const a = typeof input === "string" ? Buffer.from(input) : Buffer.alloc(expected.length);
   const b = Buffer.from(expected);
   if (a.length !== b.length) return false;
@@ -87,7 +89,7 @@ export function issueToken() {
 }
 
 export function verifyToken(token: string | undefined) {
-  if (!token) return false;
+  if (!token || !secret()) return false;
   const parts = token.split(".");
   if (parts.length !== 3) return false;
   const [nonce, issuedAt, signature] = parts;
@@ -112,7 +114,9 @@ export async function isAdmin() {
 export function cookieOptions() {
   return {
     httpOnly: true,
-    sameSite: "lax" as const,
+    // strict: the admin cookie is never sent on cross-site requests, which
+    // takes CSRF off the table for every admin mutation.
+    sameSite: "strict" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: MAX_AGE_SECONDS,

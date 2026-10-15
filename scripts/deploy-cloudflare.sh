@@ -100,8 +100,14 @@ put_secret() {
 
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
 if [ -z "$ADMIN_PASSWORD" ]; then
-  read -r -p "    Admin password for /admin (enter for REDACTED): " ADMIN_PASSWORD
-  [ -z "$ADMIN_PASSWORD" ] && ADMIN_PASSWORD="REDACTED"
+  read -r -p "    Admin password for /admin (press enter to generate a strong one): " ADMIN_PASSWORD
+  if [ -z "$ADMIN_PASSWORD" ]; then
+    if command -v openssl >/dev/null 2>&1; then
+      ADMIN_PASSWORD="$(openssl rand -base64 18 | tr -d '=/\+')" ;
+    else
+      ADMIN_PASSWORD="$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" ;
+    fi
+  fi
 fi
 
 if [ -z "${SELLER_EMAIL:-}" ]; then

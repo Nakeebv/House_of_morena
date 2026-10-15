@@ -181,7 +181,13 @@ export async function getProductForEdit(id: number) {
 
 export function newReference() {
   const stamp = Date.now().toString(36).toUpperCase().slice(-5);
-  const rand = Math.random().toString(36).toUpperCase().slice(2, 5);
+  // 10 random base36 characters (~50 bits) so order references cannot be
+  // enumerated by guessing.
+  const bytes = new Uint8Array(10);
+  crypto.getRandomValues(bytes);
+  const rand = Array.from(bytes)
+    .map((b) => "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"[b % 34])
+    .join("");
   return `MRN-${stamp}${rand}`;
 }
 

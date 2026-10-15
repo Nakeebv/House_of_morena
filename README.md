@@ -52,7 +52,7 @@ Delivery is zoned from the same country code (Iwo pickup, nationwide, West Afric
 Africa, Europe, North America, world) with free delivery above the threshold.
 
 ### Admin (`/admin`)
-Password-gated (`ADMIN_PASSWORD`, default `REDACTED`).
+Password-gated (`ADMIN_PASSWORD`, set by you as a Worker secret).
 
 - **Dashboard** — total sales in ₦ and $, order count, unpaid value, live/draft/low-stock
   counts, best sellers, recent orders.
@@ -204,7 +204,7 @@ seed again.
 | Variable | Required | Notes |
 | --- | --- | --- |
 | `DATABASE_URL` | yes | PostgreSQL connection string |
-| `ADMIN_PASSWORD` | no | Admin password. Defaults to `REDACTED`. |
+| `ADMIN_PASSWORD` | yes (prod) | Admin password. Set it as a Worker secret — never commit it. |
 | `ADMIN_SESSION_SECRET` | no | HMAC secret for the admin session cookie. |
 
 ## Contact
