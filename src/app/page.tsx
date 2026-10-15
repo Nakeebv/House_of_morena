@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import { AddToBagButton } from "@/components/product-view";
 import { Tilt } from "@/components/tilt";
+import { HeroVideo } from "@/components/hero-video";
 import { getCategories, getProducts, type Product } from "@/lib/catalog";
 import { MEDIA } from "@/lib/media";
 import { getRegion } from "@/lib/region";
@@ -51,17 +52,10 @@ export default async function HomePage() {
       </section>
 
       <section className="shell mt-10 md:mt-14">
-        <div className="overflow-hidden rounded-[26px] bg-mist md:rounded-[34px]">
-          <Tilt className="aspect-[4/5] sm:aspect-[16/11]" strength={3}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={MEDIA.hero}
-              alt="Morena Collection perfume bottle"
-              className="h-full w-full object-cover"
-              width={1800}
-              height={1100}
-            />
-          </Tilt>
+        <div className="overflow-hidden rounded-[26px] bg-ink md:rounded-[34px]">
+          <div className="aspect-[4/5] sm:aspect-[16/11]">
+            <HeroVideo />
+          </div>
         </div>
       </section>
 
