@@ -76,8 +76,8 @@ export async function ShopScreen({
         </p>
       </header>
 
-      <div className="mt-8 flex flex-col gap-4 border-y border-line py-4 md:flex-row md:items-center md:justify-between">
-        <div className="no-bar -mx-1 flex items-center gap-1.5 overflow-x-auto px-1">
+      <div className="mt-8 grid gap-4 border-y border-line py-4 xl:grid-cols-[1fr_auto] xl:items-center">
+        <div className="no-bar -mx-1 flex min-w-0 items-center gap-1.5 overflow-x-auto px-1">
           <FilterPill href={`/shop${searchParams(search, sort)}`} active={!categorySlug}>
             All
           </FilterPill>
@@ -92,17 +92,23 @@ export async function ShopScreen({
           ))}
         </div>
 
-        <form className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto md:flex-nowrap md:justify-end">
+        {/* Own row below xl so the search bar can never sit on top of the pills */}
+        <form className="flex w-full flex-wrap items-center gap-2 xl:ml-auto xl:w-auto xl:flex-nowrap xl:justify-end">
           {categorySlug ? <input type="hidden" name="category" value={categorySlug} /> : null}
           <input
             type="search"
             name="q"
             defaultValue={search ?? ""}
             placeholder="Search the collection"
-            className="field h-10 min-w-0 flex-1 text-[13px] md:w-[220px] md:flex-none"
+            className="field h-10 min-w-0 flex-1 text-[13px] xl:w-[220px] xl:flex-none"
             aria-label="Search products"
           />
-          <select name="sort" defaultValue={activeSort} className="field h-10 w-[150px] shrink-0 text-[13px] md:w-[168px]" aria-label="Sort">
+          <select
+            name="sort"
+            defaultValue={activeSort}
+            className="field h-10 w-[150px] shrink-0 text-[13px] xl:w-[168px]"
+            aria-label="Sort"
+          >
             {SORTS.map((option) => (
               <option key={option.key} value={option.key}>
                 {option.label}
