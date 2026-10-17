@@ -1,11 +1,12 @@
 # Local secrets for `npx wrangler dev`.
+# This example file was sanitized to remove any real secrets.
 # Copy to .dev.vars — that file is gitignored.
 
-DATABASE_URL=postgresql://user:password@host:5432/morena
-ADMIN_PASSWORD=choose-a-long-private-password
+DATABASE_URL=postgresql://user:password@127.0.0.1:5432/morena
+ADMIN_PASSWORD=changeme
 ADMIN_SESSION_SECRET=change-me
 
 # Email (optional — messages queue until these are set)
 RESEND_API_KEY=
-EMAIL_FROM=Morena Collection <orders@yourdomain.com>
+EMAIL_FROM=Morena Collection <orders@example.com>
 SELLER_EMAIL=
